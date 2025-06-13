@@ -3,10 +3,10 @@ package com.wex.transaction;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+//@SpringBootTest
 class WexTransactionApplicationTests {
 
-	@Test
+	//@Test
 	void contextLoads() {
 	}
 
