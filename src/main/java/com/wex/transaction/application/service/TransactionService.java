@@ -6,6 +6,8 @@ import com.wex.transaction.domain.model.ExchangeRateResponse;
 import com.wex.transaction.domain.model.Transaction;
 import com.wex.transaction.domain.port.in.service.TransactionServicePort;
 import com.wex.transaction.domain.port.out.repository.TransactionRepository;
+import com.wex.transaction.domain.exception.TransactionNotFoundException;
+import com.wex.transaction.domain.exception.InvalidLocaleException;
 import com.wex.transaction.infrastructure.adapter.out.integration.TreasuryRatesApiClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -38,13 +40,13 @@ public class TransactionService implements TransactionServicePort {
     @Override
     public Transaction convertTransactionCurrency(Long transactionId, String locale) {
         if(!CountryCurrencyFormatter.isValidLocale(locale)) {
-            throw new IllegalArgumentException("Invalid locale " + locale);
+            throw new InvalidLocaleException(locale);
         }
 
         Transaction transaction = getTransaction(transactionId);
         String inputCurrency = CountryCurrencyFormatter.format(locale);
         if (transaction == null) {
-            throw new RuntimeException("Transaction not found with id: " + transactionId);
+            throw new TransactionNotFoundException(transactionId);
         }
 
         ExchangeRateData targetRate = fetchRates(inputCurrency,
@@ -92,6 +94,6 @@ public class TransactionService implements TransactionServicePort {
                 return Long.compare(diff1, diff2);
             })
             .findFirst()
-            .orElseThrow(() -> new RuntimeException("No exchange rate found for currency: " + currency));
+            .orElseThrow(() -> new TransactionNotFoundException(currency));
     }
 }
