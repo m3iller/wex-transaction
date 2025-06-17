@@ -1,5 +1,6 @@
 package com.wex.transaction.infrastructure.adapter.out.persistence;
 
+import com.wex.transaction.domain.exception.TransactionNotFoundException;
 import com.wex.transaction.domain.model.Transaction;
 import com.wex.transaction.domain.port.out.repository.TransactionRepository;
 import org.springframework.data.domain.Page;
@@ -26,7 +27,7 @@ public class TransactionRepositoryImp implements TransactionRepository {
     public Transaction getById(Long id) {
         TransactionEntity entity = transactionRepository.findById(id).orElse(null);
         if(entity == null) {
-            throw new IllegalArgumentException("Transaction not found");
+            throw new TransactionNotFoundException(id);
         }
         return entity.toDomain();
     }

@@ -9,8 +9,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Currency;
-
 @RestController
 @RequestMapping("/transactions")
 public class TransactionController {
@@ -40,8 +38,4 @@ public class TransactionController {
                                           @PathVariable String locale) {
         return transactionService.convertTransactionCurrency(id, locale);
     }
-
-
-
-
 }

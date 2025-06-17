@@ -3,6 +3,9 @@ package com.wex.transaction.infrastructure.adapter.out.integration;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wex.transaction.domain.model.ExchangeRateResponse;
+
+import com.wex.transaction.domain.port.out.TreasuryRatesClientPort;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -11,10 +14,14 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 @Service
-public class TreasuryRatesApiClient {
-    private static final String BASE_URL = "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/rates_of_exchange";
-    private static final String FIELDS = "?fields=country,country_currency_desc,currency,exchange_rate,record_date";
-    private static final String FILTER = "&filter=country_currency_desc:in:(%s),record_date:gte:%s";
+public class TreasuryRatesApiClient implements TreasuryRatesClientPort {
+
+    @Value("${treasury.api.base-url}")
+    private String baseUrl;
+    @Value("${treasury.api.fields}")
+    private String fields;
+    @Value("${treasury.api.filter}")
+    private String filter;
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -28,8 +35,8 @@ public class TreasuryRatesApiClient {
     public ExchangeRateResponse getExchangeRates(String countryCurrency,
                                                  String recordDate) {
         try {
-            String formattedFilter = String.format(FILTER, countryCurrency, recordDate);
-            String absoluteUrl = String.format("%s%s%s", BASE_URL, FIELDS, formattedFilter);
+            String formattedFilter = String.format(filter, countryCurrency, recordDate);
+            String absoluteUrl = String.format("%s%s%s", baseUrl, fields, formattedFilter);
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(absoluteUrl))
                     .GET()

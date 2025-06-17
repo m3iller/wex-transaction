@@ -8,7 +8,7 @@ import com.wex.transaction.domain.port.in.service.TransactionServicePort;
 import com.wex.transaction.domain.port.out.repository.TransactionRepository;
 import com.wex.transaction.domain.exception.TransactionNotFoundException;
 import com.wex.transaction.domain.exception.InvalidLocaleException;
-import com.wex.transaction.infrastructure.adapter.out.integration.TreasuryRatesApiClient;
+import com.wex.transaction.domain.port.out.TreasuryRatesClientPort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +23,7 @@ import java.math.BigDecimal;
 public class TransactionService implements TransactionServicePort {
 
     @Autowired
-    private TreasuryRatesApiClient treasuryRatesApiClient;
+    private TreasuryRatesClientPort exchangeRateClientPort;
     @Autowired
     private TransactionRepository transactionRepository;
 
@@ -49,11 +49,37 @@ public class TransactionService implements TransactionServicePort {
             throw new TransactionNotFoundException(transactionId);
         }
 
-        ExchangeRateData targetRate = fetchRates(inputCurrency,
-            transaction.getTransactionDate().toString());
+        // Use port to get all rates for the currency (for a range of dates)
+        LocalDate parsedRecordDate = transaction.getTransactionDate();
+        LocalDate date6Months = parsedRecordDate.minusMonths(6);
+        ExchangeRateResponse response = exchangeRateClientPort.getExchangeRates(inputCurrency, date6Months.toString());
+
+        // Find exact match for requested date
+        ExchangeRateData exactMatch = response.data().stream()
+            .filter(rate -> rate.countryCurrencyDesc().equals(inputCurrency))
+            .filter(rate -> rate.recordDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().equals(parsedRecordDate))
+            .findFirst()
+            .orElse(null);
+
+        ExchangeRateData targetRate;
+        if (exactMatch != null) {
+            targetRate = exactMatch;
+        } else {
+            // If no exact match, find the closest date
+            targetRate = response.data().stream()
+                .filter(rate -> rate.countryCurrencyDesc().equals(inputCurrency))
+                .sorted((r1, r2) -> {
+                    LocalDate date1 = r1.recordDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                    LocalDate date2 = r2.recordDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                    long diff1 = ChronoUnit.DAYS.between(date1, parsedRecordDate);
+                    long diff2 = ChronoUnit.DAYS.between(date2, parsedRecordDate);
+                    return Long.compare(diff1, diff2);
+                })
+                .findFirst()
+                .orElseThrow(() -> new TransactionNotFoundException(inputCurrency));
+        }
 
         BigDecimal targetRateValue = new BigDecimal(targetRate.exchangeRate());
-
         transaction.setExchangeRate(targetRateValue);
         transaction.calcWithRate(transaction.getAmount(), targetRateValue);
         return transaction;
@@ -64,36 +90,4 @@ public class TransactionService implements TransactionServicePort {
         return transactionRepository.findAll(pageable);
     }
 
-    public ExchangeRateData fetchRates(String currency, String recordDate) {
-        LocalDate parsedRecordDate = LocalDate.parse(recordDate);
-        LocalDate date6Months = parsedRecordDate.minusMonths(6);
-
-        ExchangeRateResponse response = treasuryRatesApiClient.getExchangeRates(currency, date6Months.toString());
-        
-        // First try to find exact match for the requested date
-        ExchangeRateData exactMatch = response.data().stream()
-            .filter(rate -> rate.countryCurrencyDesc().equals(currency))
-            .filter(rate -> rate.recordDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().equals(parsedRecordDate))
-            .findFirst()
-            .orElse(null);
-
-        if (exactMatch != null) {
-            return exactMatch;
-        }
-
-        // If no exact match, find the closest date
-        return response.data().stream()
-            .filter(rate -> rate.countryCurrencyDesc().equals(currency))
-            .sorted((r1, r2) -> {
-                LocalDate date1 = r1.recordDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                LocalDate date2 = r2.recordDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-                long diff1 = ChronoUnit.DAYS.between(date1, parsedRecordDate);
-                long diff2 = ChronoUnit.DAYS.between(date2, parsedRecordDate);
-
-                return Long.compare(diff1, diff2);
-            })
-            .findFirst()
-            .orElseThrow(() -> new TransactionNotFoundException(currency));
-    }
 }
