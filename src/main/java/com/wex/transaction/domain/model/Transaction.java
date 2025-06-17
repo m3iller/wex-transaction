@@ -3,7 +3,6 @@ package com.wex.transaction.domain.model;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.Currency;
 
 public class Transaction {
 
@@ -11,17 +10,15 @@ public class Transaction {
     private String description;
     private LocalDate transactionDate;
     private BigDecimal amount;
-    private Currency currency;
-    private Currency convertedCurrency;
     private BigDecimal convertedAmount;
+    private BigDecimal exchangeRate;
 
-    public Transaction(Long id, String description, LocalDate transactionDate, BigDecimal amount, Currency currency) {
+    public Transaction(Long id, String description, LocalDate transactionDate, BigDecimal amount) {
         validateTransaction(description, transactionDate, amount);
         this.id = id;
         this.description = description;
         this.transactionDate = transactionDate;
         this.amount = amount;
-        this.currency = currency;
     }
 
     public void validateTransaction(String description, LocalDate transactionDate, BigDecimal amount){
@@ -33,10 +30,10 @@ public class Transaction {
             throw new IllegalArgumentException("Amount must be positive");
     }
 
-    public void calcWithRate(BigDecimal rateCurrency,
-                                             Currency currencyToConvert) {
-        this.convertedAmount = this.getAmount().multiply(rateCurrency).setScale(2, RoundingMode.HALF_UP);
-        this.convertedCurrency = currencyToConvert;
+    public void calcWithRate(BigDecimal valueInUsd,
+                             BigDecimal targetCurrencyRate) {
+        BigDecimal valueInTargetCurrency = valueInUsd.multiply(targetCurrencyRate);
+        this.convertedAmount = valueInTargetCurrency.setScale(2, RoundingMode.HALF_UP);
     }
 
     public Long getId() {
@@ -71,27 +68,19 @@ public class Transaction {
         this.amount = amount;
     }
 
-    public Currency getCurrency() {
-        return currency;
-    }
-
-    public void setCurrency(Currency currency) {
-        this.currency = currency;
-    }
-
-    public Currency getConvertedCurrency() {
-        return convertedCurrency;
-    }
-
-    public void setConvertedCurrency(Currency convertedCurrency) {
-        this.convertedCurrency = convertedCurrency;
-    }
-
     public BigDecimal getConvertedAmount() {
         return convertedAmount;
     }
 
     public void setConvertedAmount(BigDecimal convertedAmount) {
         this.convertedAmount = convertedAmount;
+    }
+
+    public BigDecimal getExchangeRate() {
+        return exchangeRate;
+    }
+
+    public void setExchangeRate(BigDecimal exchangeRate) {
+        this.exchangeRate = exchangeRate;
     }
 }

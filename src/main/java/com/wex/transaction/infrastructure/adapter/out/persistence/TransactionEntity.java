@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Currency;
 
 @Entity
 @Table(name = "transactions")
@@ -15,10 +14,12 @@ public class TransactionEntity implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(name = "description")
     private String description;
+    @Column(name = "transactionDate")
     private LocalDate transactionDate;
+    @Column(name = "amount")
     private BigDecimal amount;
-    private String currency;
 
     public TransactionEntity() {}
 
@@ -27,11 +28,10 @@ public class TransactionEntity implements Serializable {
         this.description = transactionDomain.getDescription();
         this.transactionDate = transactionDomain.getTransactionDate();
         this.amount = transactionDomain.getAmount();
-        this.currency = transactionDomain.getCurrency().getCurrencyCode();
     }
 
     public Transaction toDomain() {
-        return new Transaction(id, description, transactionDate, amount, Currency.getInstance(currency));
+        return new Transaction(id, description, transactionDate, amount);
     }
 
     public Long getId() {
@@ -66,11 +66,4 @@ public class TransactionEntity implements Serializable {
         this.amount = amount;
     }
 
-    public String getCurrency() {
-        return currency;
-    }
-
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
 }

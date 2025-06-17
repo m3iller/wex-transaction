@@ -2,7 +2,6 @@ package com.wex.transaction.infrastructure.adapter.out.persistence;
 
 import com.wex.transaction.domain.model.Transaction;
 import com.wex.transaction.domain.port.out.repository.TransactionRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

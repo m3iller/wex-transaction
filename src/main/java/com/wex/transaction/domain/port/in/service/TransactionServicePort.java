@@ -7,5 +7,6 @@ import org.springframework.data.domain.Pageable;
 public interface TransactionServicePort {
     Transaction createTransaction(Transaction tx);
     Transaction getTransaction(Long id);
+    Transaction convertTransactionCurrency(Long transactionId, String currency);
     Page<Transaction> listTransactions(Pageable pageable);
 }
