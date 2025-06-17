@@ -125,7 +125,6 @@ mvn test
 - Sorting parameters must be property names, e.g. `sort=transactionDate,desc`
 - All monetary values use `BigDecimal`
 - Currency conversion uses a live external API for exchange rates.
-- Integration tests for external clients use Spring's test slicing (`@SpringBootTest(classes=...)`) to remain fast and isolated from the database context.
 
 ---
 
