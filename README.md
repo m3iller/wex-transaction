@@ -39,6 +39,9 @@ POSTGRES_PASSWORD=postgres
 POSTGRES_DB=transaction_db
 POSTGRES_HOST=postgres
 SPRING_PROFILES_ACTIVE=dev
+
+# A secret key for authenticating API requests
+API_KEY=your-secret-api-key
 ```
 
 ### 3. Build and Run with Docker Compose
@@ -50,7 +53,23 @@ The application will be available at `http://localhost:8080`.
 
 ---
 
+## Authentication
 
+All API endpoints under `/transactions` are protected and require an API key.
+
+### Providing the API Key
+You must include the API key in the `X-API-KEY` header of your requests.
+
+#### Using `curl`
+```sh
+curl -H "X-API-KEY: your-secret-api-key" http://localhost:8080/transactions/1
+```
+
+#### Using Swagger UI
+1.  Navigate to the [Swagger UI](http://localhost:8080/swagger-ui.html).
+2.  Click the **Authorize** button at the top right.
+3.  Enter your API key from the `.env` file into the `apiKeyAuth` value field and click "Authorize".
+4.  All subsequent requests made through the UI will now include the correct authentication header.
 
 ---
 
