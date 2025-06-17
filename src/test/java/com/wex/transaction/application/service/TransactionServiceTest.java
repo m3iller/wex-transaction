@@ -1,5 +1,6 @@
 package com.wex.transaction.application.service;
 
+import com.wex.transaction.domain.exception.TransactionException;
 import com.wex.transaction.domain.model.Transaction;
 import com.wex.transaction.domain.model.ExchangeRateData;
 import com.wex.transaction.domain.model.ExchangeRateResponse;
@@ -28,9 +29,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class TransactionServiceTest {
-
-    @Mock
-    private TreasuryRatesApiClient treasuryRatesApiClient;
 
     @Mock
     private TransactionRepository transactionRepository;
@@ -69,6 +67,51 @@ public class TransactionServiceTest {
         assertNotNull(created);
         assertEquals(testTransaction.getId(), created.getId());
         verify(transactionRepository, times(1)).save(any(Transaction.class));
+    }
+
+    @Test
+    void testCreateTransaction_throwsException_whenDescriptionIsNull() {
+        testTransaction.setDescription(null);
+
+        TransactionException exception = assertThrows(TransactionException.class, () -> {
+            transactionService.createTransaction(testTransaction);
+        });
+
+        assertNotNull(exception.getMessage());
+    }
+
+    @Test
+    void testCreateTransaction_throwsException_whenDescriptionIsTooLong() {
+        String longDescription = "a".repeat(51);
+        testTransaction.setDescription(longDescription);
+
+        TransactionException exception = assertThrows(TransactionException.class, () -> {
+            transactionService.createTransaction(testTransaction);
+        });
+
+        assertNotNull(exception.getMessage());
+    }
+
+    @Test
+    void testCreateTransaction_throwsException_whenAmountIsNull() {
+        testTransaction.setAmount(null);
+
+        TransactionException exception = assertThrows(TransactionException.class, () -> {
+            transactionService.createTransaction(testTransaction);
+        });
+
+        assertNotNull(exception.getMessage());
+    }
+
+    @Test
+    void testCreateTransaction_throwsException_whenDateIsNull() {
+        testTransaction.setTransactionDate(null);
+
+        TransactionException exception = assertThrows(TransactionException.class, () -> {
+            transactionService.createTransaction(testTransaction);
+        });
+
+        assertNotNull(exception.getMessage());
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.wex.transaction.application.service;
 
 import com.wex.transaction.domain.common.CountryCurrencyFormatter;
+import com.wex.transaction.domain.exception.TransactionException;
 import com.wex.transaction.domain.model.ExchangeRateData;
 import com.wex.transaction.domain.model.ExchangeRateResponse;
 import com.wex.transaction.domain.model.Transaction;
@@ -28,8 +29,24 @@ public class TransactionService implements TransactionServicePort {
     private TransactionRepository transactionRepository;
 
     @Override
-    public Transaction createTransaction(Transaction tx) {
-        return transactionRepository.save(tx);
+    public Transaction createTransaction(Transaction transaction) {
+        validateTransation(transaction);
+        return transactionRepository.save(transaction);
+    }
+
+    private static void validateTransation(Transaction transaction) {
+        if(transaction.getDescription() == null) {
+            throw new TransactionException("Description is null");
+        }
+        if(transaction.getDescription().length() > 50 ) {
+            throw new TransactionException("Description is too long , max is 50");
+        }
+        if(transaction.getAmount() == null || transaction.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new TransactionException("Amount is null or negative");
+        }
+        if(transaction.getTransactionDate() == null) {
+            throw new TransactionException("Transaction date is null");
+        }
     }
 
     @Override
